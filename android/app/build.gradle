@@ -13,4 +13,16 @@ android {
         versionCode 1
         versionName '0.1.0'
     }
+
+    // Keep Java and Kotlin bytecode targets aligned with the JDK used by CI.
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_21
+        targetCompatibility JavaVersion.VERSION_21
+    }
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_21
+    }
 }
