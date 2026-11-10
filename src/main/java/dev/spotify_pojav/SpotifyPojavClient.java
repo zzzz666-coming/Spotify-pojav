@@ -134,11 +134,11 @@ public final class SpotifyPojavClient implements ClientModInitializer {
         Vector3f offset = new Vector3f(0.0f, 0.0f, -2.65f).rotate(cameraState.orientation);
         float bob = (float) Math.sin(System.currentTimeMillis() / 650.0) * 0.035f;
         var matrices = context.matrices();
-        matrices.pushPose();
+        matrices.push();
         try {
             matrices.translate(offset.x, offset.y + 0.32f + bob, offset.z);
-            matrices.mulPose(new Quaternionf(cameraState.orientation));
-            matrices.mulPose(new Quaternionf().rotationY((float) Math.PI));
+            matrices.multiply(new Quaternionf(cameraState.orientation));
+            matrices.multiply(new Quaternionf().rotationY((float) Math.PI));
             matrices.scale(-0.025f, -0.025f, 0.025f);
 
             TextRenderer renderer = client.textRenderer;
@@ -146,7 +146,7 @@ public final class SpotifyPojavClient implements ClientModInitializer {
             String next = trim(data.nextLyric, 54);
             int currentWidth = renderer.getWidth(current);
             renderer.draw(current, -currentWidth / 2.0f, -5.0f, 0xFF8CF4E8,
-                    true, matrices.last().pose(), context.consumers(),
+                    true, matrices.peek().getPositionMatrix(), context.consumers(),
                     TextRenderer.TextLayerType.NORMAL, 0, 0x00F000F0);
 
             if (!next.isBlank() && !next.equals(data.lyric)) {
@@ -156,7 +156,7 @@ public final class SpotifyPojavClient implements ClientModInitializer {
                         TextRenderer.TextLayerType.NORMAL, 0, 0x00F000F0);
             }
         } finally {
-            matrices.popPose();
+            matrices.pop();
         }
     }
 
