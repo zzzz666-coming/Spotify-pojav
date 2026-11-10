@@ -25,3 +25,11 @@ Requires Java 21 and Gradle. Run gradle build. The mod JAR is generated in build
 Spotify documents an optional Android Device Broadcast Status feature that can broadcast track metadata and playback position. The user must enable it in Spotify settings. A companion Android app will be needed to receive that broadcast and expose the local JSON endpoint. Until that companion is implemented and tested, Spotify integration is experimental and not yet available.
 
 See Spotify's Android media notifications documentation: https://developer.spotify.com/documentation/android/tutorials/android-media-notifications
+
+## Android companion (prototype)
+
+The `android/` folder contains a companion app that listens for Spotify's documented Android media broadcasts while the app is open and serves the latest metadata at `127.0.0.1:8765/now`. On the phone, enable Spotify's **Device Broadcast Status** setting and keep the companion open. This receiver is best-effort: Android/Spotify may defer or omit broadcasts, and it has not yet been validated on a Galaxy A34 / Zalith session.
+
+Build the companion with `gradle -p android assembleDebug`. The APK is output to `android/app/build/outputs/apk/debug/`.
+
+Lyrics and in-world 3D lyric rendering are not implemented in this prototype yet. The HUD currently supports one lyric string from the bridge, but no lyrics provider is bundled.
