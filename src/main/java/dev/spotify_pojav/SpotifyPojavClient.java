@@ -152,7 +152,7 @@ public final class SpotifyPojavClient implements ClientModInitializer {
             if (!next.isBlank() && !next.equals(data.lyric)) {
                 int nextWidth = renderer.getWidth(next);
                 renderer.draw(next, -nextWidth / 2.0f, 9.0f, 0xFFB8A6D8,
-                        true, matrices.last().pose(), context.consumers(),
+                        true, matrices.peek().getPositionMatrix(), context.consumers(),
                         TextRenderer.TextLayerType.NORMAL, 0, 0x00F000F0);
             }
         } finally {
