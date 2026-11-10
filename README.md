@@ -1,35 +1,35 @@
 # Spotify Pojav — Minecraft music HUD
 
-A client-side Fabric mod prototype for Minecraft Java 1.21.11, designed for Android launchers such as Zalith/Pojav.
+Experimental Fabric client mod for Minecraft Java 1.21.11 with an Android companion intended for Zalith/Pojav.
 
-## Current status
+## Features
+- Spotify track, artist, playback state and progress bar in a compact purple/cyan HUD.
+- Current and upcoming lyric line synchronized to playback position.
+- Import a local timed lyrics file (`.lrc`) using the companion app's file picker.
+- Toggle the HUD with Right Shift (default).
+- Local bridge at `http://127.0.0.1:8765/now`, polled once per second.
 
-This first commit adds the in-game HUD and a local bridge client. It does NOT yet read Spotify directly from Android. A separate Android companion/bridge is required because a Minecraft Java mod cannot automatically access Android media-session permissions.
+## Setup
+1. Build/install the Android companion APK from the GitHub Actions artifact `spotify-pojav-android`.
+2. In Spotify settings, enable **Device Broadcast Status**.
+3. Start a track in Spotify.
+4. Open Spotify Pojav Bridge and keep it open while playing.
+5. Tap **Cargar letras (.lrc)** and choose the matching timed lyrics file.
+6. Launch Minecraft with the Fabric mod installed.
 
-## HUD
-
-- Toggle with Right Shift by default.
-- Displays track, artist, playback state and optional lyric line.
-- Compact translucent purple/cyan panel.
-- Reads JSON from http://127.0.0.1:8765/now every 2 seconds.
-- If no bridge is running, it shows a disconnected state.
-
-Expected JSON: {"title":"Track title","artist":"Artist name","playing":true,"positionMs":42000,"durationMs":210000,"lyric":"Current lyric line"}
+## LRC example
+```text
+[00:05.20]First timed line
+[00:09.80]Second timed line
+[00:14.00]Third timed line
+```
+The app parses timestamps and selects the current and next lines using Spotify's playback position. It does not scrape or redistribute lyrics.
 
 ## Build
+- Mod: Java 21, `gradle build`; JAR in `build/libs/`.
+- Companion: `gradle -p android assembleDebug`; APK in `android/app/build/outputs/apk/debug/`.
 
-Requires Java 21 and Gradle. Run gradle build. The mod JAR is generated in build/libs/.
+## Compatibility
+The companion listens for Spotify's optional Android media broadcasts. Spotify must expose them; the companion cannot enable that setting. Keep the companion open because the local bridge currently runs only while its Activity is alive.
 
-## Android / Spotify notes
-
-Spotify documents an optional Android Device Broadcast Status feature that can broadcast track metadata and playback position. The user must enable it in Spotify settings. A companion Android app will be needed to receive that broadcast and expose the local JSON endpoint. Until that companion is implemented and tested, Spotify integration is experimental and not yet available.
-
-See Spotify's Android media notifications documentation: https://developer.spotify.com/documentation/android/tutorials/android-media-notifications
-
-## Android companion (prototype)
-
-The `android/` folder contains a companion app that listens for Spotify's documented Android media broadcasts while the app is open and serves the latest metadata at `127.0.0.1:8765/now`. On the phone, enable Spotify's **Device Broadcast Status** setting and keep the companion open. This receiver is best-effort: Android/Spotify may defer or omit broadcasts, and it has not yet been validated on a Galaxy A34 / Zalith session.
-
-Build the companion with `gradle -p android assembleDebug`. The APK is output to `android/app/build/outputs/apk/debug/`.
-
-Lyrics and in-world 3D lyric rendering are not implemented in this prototype yet. The HUD currently supports one lyric string from the bridge, but no lyrics provider is bundled.
+The project is experimental and still needs a successful CI build and real-device testing on Zalith. This version displays lyrics in the 2D HUD; floating 3D lyrics are not included yet.
