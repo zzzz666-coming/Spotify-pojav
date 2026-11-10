@@ -1,0 +1,16 @@
+plugins {
+    id 'com.android.application'
+    id 'org.jetbrains.kotlin.android'
+}
+
+android {
+    namespace 'dev.spotify_pojav.bridge'
+    compileSdk 35
+    defaultConfig {
+        applicationId 'dev.spotify_pojav.bridge'
+        minSdk 26
+        targetSdk 28
+        versionCode 1
+        versionName '0.1.0'
+    }
+}
