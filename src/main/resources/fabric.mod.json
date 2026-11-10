@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "id": "spotifypojav",
+  "version": "${version}",
+  "name": "Spotify Pojav",
+  "description": "A lightweight music HUD with an optional local Android companion bridge.",
+  "environment": "client",
+  "entrypoints": { "client": ["dev.spotify_pojav.SpotifyPojavClient"] },
+  "depends": { "fabricloader": ">=0.19.3", "minecraft": "1.21.11", "java": ">=21", "fabric-api": "*" }
+}
