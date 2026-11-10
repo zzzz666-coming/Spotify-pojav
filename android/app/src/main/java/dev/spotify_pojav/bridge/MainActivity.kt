@@ -13,7 +13,7 @@ import java.util.concurrent.Executors
 import org.json.JSONObject
 
 class MainActivity : Activity() {
-    private val executor = Executors.newSingleThreadExecutor()
+    private val executor = Executors.newCachedThreadPool()
     @Volatile private var track = JSONObject().put("title", "Waiting for Spotify").put("artist", "Enable Device Broadcast Status").put("playing", false).put("positionMs", 0).put("durationMs", 0).put("lyric", "")
     private lateinit var status: TextView
     private var server: ServerSocket? = null
