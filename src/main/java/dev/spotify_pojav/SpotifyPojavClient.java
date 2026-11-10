@@ -6,12 +6,16 @@ import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
+import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderEvents;
+import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil;
 import net.minecraft.text.Text;
 import org.lwjgl.glfw.GLFW;
+import org.joml.Vector3f;
+import org.joml.Quaternionf;
 
 import java.net.HttpURLConnection;
 import java.net.URI;
@@ -29,17 +33,26 @@ public final class SpotifyPojavClient implements ClientModInitializer {
     private static volatile TrackInfo track = TrackInfo.disconnected();
     private static boolean visible = true;
     private static KeyBinding toggleKey;
+    private static KeyBinding toggle3dKey;
+    private static boolean lyrics3dVisible = true;
 
     @Override
     public void onInitializeClient() {
         toggleKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
                 "key.spotifypojav.toggle_hud", InputUtil.Type.KEYSYM,
                 GLFW.GLFW_KEY_RIGHT_SHIFT, KeyBinding.Category.MISC));
+        toggle3dKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
+                "key.spotifypojav.toggle_3d_lyrics", InputUtil.Type.KEYSYM,
+                GLFW.GLFW_KEY_RIGHT_ALT, KeyBinding.Category.MISC));
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             while (toggleKey.wasPressed()) visible = !visible;
+            while (toggle3dKey.wasPressed()) lyrics3dVisible = !lyrics3dVisible;
         });
         HudRenderCallback.EVENT.register((drawContext, tickCounter) -> {
             if (visible) renderHud(MinecraftClient.getInstance(), drawContext);
+        });
+        WorldRenderEvents.END_MAIN.register(context -> {
+            if (lyrics3dVisible) renderFloatingLyrics(MinecraftClient.getInstance(), context);
         });
         POLLER.scheduleWithFixedDelay(SpotifyPojavClient::pollBridge, 0, 1, TimeUnit.SECONDS);
     }
@@ -100,6 +113,50 @@ public final class SpotifyPojavClient implements ClientModInitializer {
                 ctx.drawTextWithShadow(client.textRenderer, Text.literal(trim(d.nextLyric, 34)), x + 10, y + 96, 0xFF88899F);
         } else {
             ctx.drawTextWithShadow(client.textRenderer, Text.literal("Load a .LRC file in companion app"), x + 10, y + 82, 0xFF9293A8);
+        }
+    }
+
+
+    /**
+     * Draws the active lyric as a camera-facing world-space billboard.
+     * Its position is camera-relative for compatibility with alternate renderers.
+     */
+    private static void renderFloatingLyrics(MinecraftClient client,
+            net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderContext context) {
+        TrackInfo data = track;
+        if (client.player == null || client.world == null || !data.connected
+                || !data.playing || !data.lyricsLoaded || data.lyric.isBlank()
+                || context.consumers() == null) return;
+
+        var cameraState = context.worldState().cameraRenderState;
+        if (cameraState == null || !cameraState.initialized || cameraState.orientation == null) return;
+
+        Vector3f offset = new Vector3f(0.0f, 0.0f, -2.65f).rotate(cameraState.orientation);
+        float bob = (float) Math.sin(System.currentTimeMillis() / 650.0) * 0.035f;
+        var matrices = context.matrices();
+        matrices.pushPose();
+        try {
+            matrices.translate(offset.x, offset.y + 0.32f + bob, offset.z);
+            matrices.mulPose(new Quaternionf(cameraState.orientation));
+            matrices.mulPose(new Quaternionf().rotationY((float) Math.PI));
+            matrices.scale(-0.025f, -0.025f, 0.025f);
+
+            TextRenderer renderer = client.textRenderer;
+            String current = trim(data.lyric, 54);
+            String next = trim(data.nextLyric, 54);
+            int currentWidth = renderer.getWidth(current);
+            renderer.draw(current, -currentWidth / 2.0f, -5.0f, 0xFF8CF4E8,
+                    true, matrices.last().pose(), context.consumers(),
+                    TextRenderer.TextLayerType.NORMAL, 0, 0x00F000F0);
+
+            if (!next.isBlank() && !next.equals(data.lyric)) {
+                int nextWidth = renderer.getWidth(next);
+                renderer.draw(next, -nextWidth / 2.0f, 9.0f, 0xFFB8A6D8,
+                        true, matrices.last().pose(), context.consumers(),
+                        TextRenderer.TextLayerType.NORMAL, 0, 0x00F000F0);
+            }
+        } finally {
+            matrices.popPose();
         }
     }
 
